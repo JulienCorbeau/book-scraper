@@ -27,8 +27,32 @@ def get_categories(url_site):
 #    pass    
 
 #Récupération des URLs des livres dans une catégorie
-#def get_urls_from_category(url):  
-#    pass
+def get_urls_from_category(url):
+    #Récupération du nombre de page dans cette categorie
+    requete = requests.get(url)
+    if (requete.status_code == 200): 
+        liste_url_book = []   
+        soup = BeautifulSoup(requete.text, 'html.parser')
+        presencePageFoot = soup.find()
+        if soup.find('ul', class_="pager") :
+            pageFoot = soup.find('ul', class_="pager")
+            string_temp = pageFoot.text
+            string_temp = string_temp.split("next")[0].strip()
+            nbPageCategorie = string_temp[-1]
+            nbPageCategorie = int(nbPageCategorie)
+        else : 
+            nbPageCategorie = 1
+        liste_url_book.append(url) 
+        if nbPageCategorie > 1 :
+            for i in range(nbPageCategorie-1) :
+                pageTemp = "page-" + str(i+2) + ".html"
+                urlTemp = url.replace("index.html", pageTemp)
+                liste_url_book.append(urlTemp)            
+    else :
+        print(f"Message d'erreur : {requete.status_code}")
+    return(liste_url_book)
+
+    
 
 #Extraction des données d'un livre
 def scrape_book_data(url):
@@ -77,11 +101,12 @@ def save_to_csv(data, filename, livre_temp):
 # Vérifie que le script est le programme principal
 if __name__ == "__main__":
     url_site = "https://books.toscrape.com/"
-    url = "https://books.toscrape.com/catalogue/sophies-world_966/index.html"
     categories = get_categories(url_site)
-    categorie = 'Travel'
-    url_categorie = categories['Travel'] 
-    print(f"'Travel' : {url_categorie}")
+    categorie = 'Nonfiction'
+    url_categorie = categories['Nonfiction']
+    print(f"'Fiction' : {url_categorie}")
+    liste_url_book = get_urls_from_category(url_categorie)
+    print(liste_url_book)
     #livre_temp = scrape_book_data(url)
     #for nom_categorie, url_categorie in categories.items():
     #    print(f"{nom_categorie} : {url_categorie}")
