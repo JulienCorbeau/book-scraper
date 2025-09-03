@@ -129,23 +129,26 @@ if __name__ == "__main__":
     #Récupération des différentes catégories
     categories = get_categories(url_site)
     #Définition manuelle d'une catégorie pour la partie 3
-    categorie = 'Travel'
-    url_categorie = categories['Travel']
-    #Récupération des liens url des différentes pages d'une catégorie
-    liste_url_pages = get_pages_from_category(url_categorie)
+    #categorie = 'Travel'
+    #url_categorie = categories['Travel']
     
-    compt = 0   # Compteur pour vérifier qu'on récupère tous les livres d'une catégorie en prenant en compte s'il y a plusieurs pages
-    books_cat = []
-    #Boucle pour parcourir les pages
-    for url_page in liste_url_pages:
-        liste_url_books = get_url_from_page(url_page)
-        #Boucle pour récupérer les liens url des livres d'une page et les stocker dans un dictionnaire
-        for url_book in liste_url_books :
-            compt = compt + 1
-            livre_temp = scrape_book_data(url_book)
-            books_cat.append(livre_temp) #stockage du dictionnaire livre dans la liste books_cat
-    print(f"Il y a eu {str(compt)} références récupérées")
-    save_to_csv(categorie, books_cat)
+    #Boucle sur toutes les catégories prélevé par la fonction get
+    for categorie in categories:
+        compt = 0   # Compteur pour vérifier qu'on récupère tous les livres d'une catégorie en prenant en compte s'il y a plusieurs pages
+        books_cat = []
+        #Récupération des liens url des différentes pages d'une catégorie
+        url_categorie = categories[categorie]
+        liste_url_pages = get_pages_from_category(url_categorie)
+        #Boucle pour parcourir les pages
+        for url_page in liste_url_pages:
+            liste_url_books = get_url_from_page(url_page)
+            #Boucle pour récupérer les liens url des livres d'une page et les stocker dans un dictionnaire
+            for url_book in liste_url_books :
+                compt = compt + 1
+                livre_temp = scrape_book_data(url_book)
+                books_cat.append(livre_temp) #stockage du dictionnaire livre dans la liste books_cat
+        print(f"Il y a eu {str(compt)} références récupérées dans la catégories : {categorie}")
+        save_to_csv(categorie, books_cat)
 
     #print(liste_url_book)
     #livre_temp = scrape_book_data(url)
