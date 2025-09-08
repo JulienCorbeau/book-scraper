@@ -3,6 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 from pathlib import Path
 import csv
+import re
 
 # Définition des fonctions
 #Récupération des catégories
@@ -13,18 +14,16 @@ def get_categories(url_site):
         soup = BeautifulSoup(response.text, 'html.parser')
         bloc_category = soup.find('div', class_="side_categories")
         ul_elements = bloc_category.find('ul', class_='nav nav-list')
-        url_cat = ul_elements.find_all('a')
 
-        for lien in url_cat:
+        url_cat = ul_elements.find_all('a')
+        for lien in url_cat[1:]:  
             categorie_name = lien.text.strip()
             categorie_url = lien['href']
             full_url = "http://books.toscrape.com/" + categorie_url
             categories[categorie_name] = full_url
-        #categories['travel'] = {'nom':'travel', 'url':'http://test.php'}
     else:
         print(f"Erreur de requête: Le code de statut est {response.status_code}")
-    return categories
-#    pass    
+    return categories   
 
 #Récupération des URLs des livres dans une catégorie
 def get_pages_from_category(url):
@@ -76,9 +75,9 @@ def get_url_from_page(url_page):
     return liste_url_books
     
 
-#Extraction des données d'un livre
 def scrape_book_data(url):
     response = requests.get(url)
+    response.encoding = 'utf-8'
 
     # Vérifiez que la requête a réussi (statut 200)
     if response.status_code == 200:
@@ -89,13 +88,42 @@ def scrape_book_data(url):
         # --- Étape 3: Extraire les informations du livre ---
         title_element = soup.find('h1')
         livre_temp['titre'] = title_element.text
-        
+        #Création du nom de fichier & Remplacement des charactère interdit
+        char_interdit = ':*?"<>|/\\\' '
+        nom_fichier = livre_temp['titre'].replace(' ', '_').replace(':','')+'.jpg'
+        for char in char_interdit:
+            nom_fichier = nom_fichier.replace(char, '_')
+        nom_fichier = re.sub('_+', '_', nom_fichier)
+        nom_fichier = nom_fichier.strip('_')
+        livre_temp['fichier'] = nom_fichier
+
         prix_element = soup.find('p', class_='price_color')
         livre_temp['prix']= prix_element.text.replace('£', '')
+        img_element = soup.find('img')
+        url_relative = img_element['src'].replace('../../','')
+        livre_temp['img_lien'] = 'http://books.toscrape.com/' + url_relative
+
+        
         return livre_temp
     else:
         print(f"Erreur de requête: Le code de statut est {response.status_code}")
 
+#Fonction telechargement des images
+def download_image(dossier_cat, url, filename): #et catégorie
+    # Fait une requête GET pour l'image
+    response = requests.get(url)
+    # Vérifie que la requête a réussi (code 200)
+    if response.status_code == 200:
+        #Construction du chemin
+        chemin_img = Path("data/images") / dossier_cat / filename
+        chemin_img.parent.mkdir(parents=True, exist_ok=True)
+        # Ouvre le fichier en mode binaire 'wb' (write binary)
+        with open(chemin_img, 'wb') as file:
+            # Écrit le contenu de la réponse dans le fichier
+            file.write(response.content)
+        print(f"Image téléchargée avec succès dans {filename}")
+    else:
+        print(f"Erreur lors du téléchargement de l'image. Code de statut: {response.status_code}")
 
 
 #Enregistrement des données dans un fichier CSV
@@ -128,30 +156,25 @@ if __name__ == "__main__":
     url_site = "https://books.toscrape.com/"
     #Récupération des différentes catégories
     categories = get_categories(url_site)
-    #Définition manuelle d'une catégorie pour la partie 3
-    #categorie = 'Travel'
-    #url_categorie = categories['Travel']
-    
-    #Boucle sur toutes les catégories prélevé par la fonction get
-    for categorie in categories:
-        compt = 0   # Compteur pour vérifier qu'on récupère tous les livres d'une catégorie en prenant en compte s'il y a plusieurs pages
+    # Création du dossier principal 'data/images' une seule fois
+    Path("data/images").mkdir(parents=True, exist_ok=True)
+     # Boucle sur toutes les catégories
+    for categorie, url_categorie in categories.items():
+        # Nettoyage du nom de la catégorie pour les noms de dossier et de fichier
+        dossier_cat_propre = categorie.replace(" ", "_").replace(":", "_").replace("'", "").replace("&", "and")
+        compt = 0
         books_cat = []
-        #Récupération des liens url des différentes pages d'une catégorie
-        url_categorie = categories[categorie]
+        # Récupération des liens url des différentes pages d'une catégorie
         liste_url_pages = get_pages_from_category(url_categorie)
-        #Boucle pour parcourir les pages
+        # Boucle pour parcourir les pages
         for url_page in liste_url_pages:
             liste_url_books = get_url_from_page(url_page)
-            #Boucle pour récupérer les liens url des livres d'une page et les stocker dans un dictionnaire
+            # Boucle pour récupérer les liens url des livres d'une page
             for url_book in liste_url_books :
                 compt = compt + 1
                 livre_temp = scrape_book_data(url_book)
-                books_cat.append(livre_temp) #stockage du dictionnaire livre dans la liste books_cat
-        print(f"Il y a eu {str(compt)} références récupérées dans la catégories : {categorie}")
+                download_image(dossier_cat_propre, livre_temp['img_lien'], livre_temp['fichier'])
+                books_cat.append(livre_temp)
+        # Sauvegarde des données dans le fichier CSV
+        print(f"Il y a eu {str(compt)} références récupérées dans la catégorie : {categorie}")
         save_to_csv(categorie, books_cat)
-
-    #print(liste_url_book)
-    #livre_temp = scrape_book_data(url)
-    #for nom_categorie, url_categorie in categories.items():
-    #    print(f"{nom_categorie} : {url_categorie}")
-    #save_to_csv(data=None, filename=None, livre_temp=livre_temp)
