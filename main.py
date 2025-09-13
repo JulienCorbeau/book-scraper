@@ -1,4 +1,18 @@
 # ------------------------------------------------------
+# APPLICATION STRUCTURE
+# ----------------------------------------------------"""
+"""
+APPLICATION STRUCTURE
+    - Main
+        ->get_categories 
+            -> get_books_from_category
+                -> get_data_from_book
+                    -> download_image
+    -> Main
+        ->save_to_csv
+
+"""
+# ------------------------------------------------------
 # IMPORTS
 # ----------------------------------------------------
 import requests
@@ -14,7 +28,7 @@ import re
 
 def get_categories(url_website):
     """
-   Fetch all categories on the site and start full scraping
+    Fetch all categories on the site and start full scraping           
 
     """
     all_books_data = []
@@ -189,7 +203,7 @@ def download_image(book_info, category_name):
     if book_info:
         img_name = book_info['file']
         
-        # === PRÉPARATION DU CHEMIN DE DESTINATION ===
+        # --- PRÉPARATION DU CHEMIN DE DESTINATION ---
         # Cleaning category name               Need to create ensure function
         clean_category_name = (category_name.replace(" ", "_")
                                             .replace(":", "_")
