@@ -18,12 +18,49 @@ def sanitize_str(str_to_clean):
         str_to_clean = str_to_clean.replace(char, '_')
     return str_to_clean
 
-def get_books_from_category(url_cat):
-    """
-    Collects a list with all the URLs of books in a category
-
+def get_categories(url_website):
     
-    """
+    try:
+        # Try to connect to the website 
+        response = requests.get(url_website, timeout=10)
+        
+        if response.status_code == 200:
+            # Parse the HTML of the homepage
+            soup = BeautifulSoup(response.text, 'html.parser')
+            
+            # Searching container with categories's menu
+            bloc_category = soup.find('div', class_="side_categories")
+            
+            if bloc_category:
+                # Extract the list of URL's Categories
+                ul_elements = bloc_category.find('ul', class_='nav nav-list')
+                url_cat = ul_elements.find_all('a')
+                
+                # Loop on each category (we just skip "Books")
+                for cat in url_cat[1:]:
+                    # Extracting name and URL's category
+                    category_name = cat.text.strip()
+                    category_url = "http://books.toscrape.com/" + cat['href']
+                    
+                    print(f"Début du scraping pour la catégorie : {category_name}")
+                    
+                    # Scraping all books from a category
+                    books_data_from_cat = get_books_from_category(category_name, category_url)
+                    
+                    print(f"Scraping de la catégorie {category_name} terminé. ")
+        else:
+            print(f"Erreur de requête pour {url_website}: "
+                  f"Le code de statut est {response.status_code}")
+            return None
+            
+    except requests.exceptions.RequestException as e:
+        print(f"Erreur de connexion pour {url_website}: {e}")
+        return None
+
+
+
+def get_books_from_category(category_name, url_cat):
+
     next_page_url = url_cat 
     
     # Loop while we have a next button
@@ -45,7 +82,7 @@ def get_books_from_category(url_cat):
                     # Building full Url of a book
                     # delete "../" & "../../" 
                     full_url = ("http://books.toscrape.com/catalogue/" + relative_url.replace('../../', '').replace('../', ''))
-                    get_data_from_book(full_url)
+                    get_data_from_book(category_name, full_url)
                 
                 # We search a next button
                 next_button = soup.find('li', class_='next')
@@ -65,13 +102,13 @@ def get_books_from_category(url_cat):
             print(f"Erreur de connexion pour la page : {next_page_url}, Erreur : {e}")
             next_page_url = None
     
-def get_data_from_book(url_book):
+def get_data_from_book(category_name, url_book):
     response = requests.get(url_book, timeout=10)
     response.encoding = 'utf-8'
     if response.status_code == 200:
         soup = BeautifulSoup(response.text, 'html.parser')
         book_data = {}
-        book_category = "Fiction"        
+        book_category = category_name        
         
         # --- Title Extraction ---
         title_element = soup.find('h1')
@@ -133,7 +170,7 @@ def save_to_csv(book_data, category):
         # Check if file exists to know if we need to write header
         file_exists = file_path.exists()
         
-        # Write to the csv document in APPEND mode
+        # Write to the csv document
         with open(file_path, 'a', newline='', encoding='utf-8') as file:
             writer = csv.DictWriter(file, fieldnames=field_names)
             
@@ -148,9 +185,11 @@ def save_to_csv(book_data, category):
     else:
         # If book has no category
         print(f"Aucune donnée à sauvegarder pour la catégorie '{category}'.")
+
+
 # -----------------------------------------------
 # MAIN ENTRY POINT
 #------------------------------------------------
 if __name__ == "__main__":
-    url_site = "https://books.toscrape.com/catalogue/category/books/fiction_10/index.html"
-    get_books_from_category(url_site)
+    url_site = "https://books.toscrape.com"
+    get_categories(url_site)
