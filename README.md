@@ -2,7 +2,7 @@
 
 &nbsp;
 
-\#Projet 1 : Système d'extraction de prix pour Books Online
+#Projet 1 : Système d'extraction de prix pour Books Online
 
 
 
@@ -10,7 +10,7 @@ Ce projet est une application en Python développée pour automatiser la collect
 
 
 
-\## Installation et exécution
+## Installation et exécution
 
 
 
@@ -18,35 +18,35 @@ Suivez les étapes ci-dessous pour installer et exécuter le programme.
 
 
 
-\### Prérequis
+### Prérequis
 
-\- Python 3.x installé sur votre machine.
+- Python 3.x installé sur votre machine.
 
-\- Git installé.
+- Git installé.
 
-\- Un environnement de développement (IDE) comme Visual Studio Code ou PyCharm.
+- Un environnement de développement (IDE) comme Visual Studio Code ou PyCharm.
 
 
 
-\### 1. Cloner le dépôt
+### 1. Cloner le dépôt
 
 Clonez ce dépôt sur votre machine locale via la ligne de commande :
 
 
 
-\_git clone https://github.com/JulienCorbeau/book-scraper\_
+_git clone https://github.com/JulienCorbeau/book-scraper\_
 
 
 
-\### 2. Configuration de l'environnement virtuel
+### 2. Configuration de l'environnement virtuel
 
 Naviguez jusqu'au répertoire du projet, créez et activez un environnement virtuel pour isoler les dépendances.Ouvrez le terminal dans le répertoire racine de votre projet et exécutez la commande suivante selon votre système d'exploitation :
 
 
 
-\- Sur Windows : \_python -m venv venv\_
+- Sur Windows : \_python -m venv venv\_
 
-\- Sur macOS/Linux : \_python3 -m venv venv\_
+- Sur macOS/Linux : \_python3 -m venv venv\_
 
 
 
@@ -54,15 +54,15 @@ Puis activez l'environnement virtuel :
 
 
 
-\- Sur Windows : \_.\\venv\\Scripts\\activate\_
+- Sur Windows : \_.\\venv\\Scripts\\activate\_
 
-\- Sur macOS/Linux : \_source venv/bin/activate\_
-
-
+- Sur macOS/Linux : \_source venv/bin/activate\_
 
 
 
-\### 3. Installation des dépendances
+
+
+### 3. Installation des dépendances
 
 Installez toutes les bibliothèques nécessaires à partir du fichier `requirements.txt` :
 
@@ -72,7 +72,7 @@ Installez toutes les bibliothèques nécessaires à partir du fichier `requireme
 
 
 
-\### 4. Exécution du script
+### 4. Exécution du script
 
 Une fois l'installation terminée, vous pouvez exécuter le script :
 
@@ -86,19 +86,19 @@ Le programme va alors se connecter au site, extraire les données, télécharger
 
 
 
-\## Livrables du projet
+## Livrables du projet
 
 
 
 Le script génère les fichiers suivants dans le dossier `data/` :
 
-\- Un sous-dossier `csv/` contenant un fichier `.csv` pour chaque catégorie de livres.
+- Un sous-dossier `csv/` contenant un fichier `.csv` pour chaque catégorie de livres.
 
-\- Un sous-dossier `images/` contenant les images de tous les livres, triées par catégorie dans un dossier distinct.
+- Un sous-dossier `images/` contenant les images de tous les livres, triées par catégorie dans un dossier distinct.
 
 
 
-\## Contexte de la mission
+## Contexte de la mission
 
 
 
