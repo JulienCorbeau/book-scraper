@@ -13,11 +13,12 @@ import re
 # ---------------------------------------------
 
 def sanitize_str(str_to_clean, max_length=150):
+    #delete & replace invalid char
     invalid_chars = ':*?"<>|/\\'
     for char in invalid_chars:
         str_to_clean = str_to_clean.replace(char, '_')
     
-    # Limiter la longueur du nom de fichier
+    # limit the size of the text
     if len(str_to_clean) > max_length:
         str_to_clean = str_to_clean[:max_length]
     
@@ -52,7 +53,7 @@ def get_categories(url_website):
                     print(f"Début du scraping pour la catégorie : {category_name}")
                     
                     # Scraping all books from a category
-                    books_data_from_cat = get_books_from_category(category_name, category_url)
+                    get_books_from_category(category_name, category_url)
                     
                     print(f"Scraping de la catégorie {category_name} terminé. ")
         else:
@@ -67,38 +68,27 @@ def get_categories(url_website):
 
 
 def get_books_from_category(category_name, url_cat):
-
     next_page_url = url_cat 
-    
-    # Loop while we have a next button
+    #loop while we have "next page" button
     while next_page_url:
         try:
-            # Requesting the first page of the category
             response = requests.get(next_page_url, timeout=10)
-            
             if response.status_code == 200:
                 soup = BeautifulSoup(response.text, 'html.parser')
                 
-                # Searching all containers with a book (<h3>)
+                #catch all containers with book and call get data function
                 book_containers = soup.find_all('h3')
-                
-                # Extract the URL of the book
                 for container in book_containers:
                     relative_url = container.find('a')['href']
-                    
-                    # Building full Url of a book
-                    # delete "../" & "../../" 
                     full_url = ("http://books.toscrape.com/catalogue/" + relative_url.replace('../../', '').replace('../', ''))
                     get_data_from_book(category_name, full_url)
                 
-                # We search a next button
+                #identify if we have 'next button'
                 next_button = soup.find('li', class_='next')
                 if next_button:
-                    # Building URL next page
                     relative_next_url = next_button.find('a')['href']
                     next_page_url = "/".join(next_page_url.split('/')[:-1]) + "/" + relative_next_url
                 else:
-                    # No "next button", we continu
                     next_page_url = None
             else:
                 print(f"Erreur de requête pour la page : {next_page_url}, "
@@ -129,6 +119,7 @@ def get_data_from_book(category_name, url_book):
         # --- Product Information Table Extraction ---
         product_table = soup.find('table', class_='table table-striped')
         
+        #Check the product table to identify the carac to insert in book_data
         if product_table:
             rows = product_table.find_all('tr')
             
@@ -147,7 +138,7 @@ def get_data_from_book(category_name, url_book):
                     elif field_name == "Price (incl. tax)":
                         book_data['price_including_tax'] = field_value.replace('£', '').strip()
                     elif field_name == "Availability":
-                        # Extraire le nombre disponible depuis "In stock (X available)"
+                        # Extract the number of books available: "In stock (X available)"
                         match = re.search(r'\((\d+) available\)', field_value)
                         if match:
                             book_data['number_available'] = match.group(1)
@@ -185,11 +176,10 @@ def get_data_from_book(category_name, url_book):
             img_url = 'http://books.toscrape.com/' + url_relative
             book_data['image_url'] = img_url
             
-            # Préparer le nom de fichier pour télécharger l'image
+            # Prepare name file and call function download_image
             file_name = book_data['title'].replace("'", "").replace("&", "and")
             file_name = sanitize_str(file_name)
             file_name = re.sub('_+', '_', file_name) + '.jpg'
-            
             download_image(img_url, file_name, category_name)
         else:
             book_data['image_url'] = ""
@@ -225,7 +215,7 @@ def save_to_csv(book_data, category):
     file_name = f"Scraping_{category}.csv"
     file_path = Path("data/csv") / file_name
     
-    # COLONNES EXACTES selon vos spécifications
+    # Building headers
     field_names = [
         'product_page_url',
         'universal_product_code',
