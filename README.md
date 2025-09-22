@@ -34,7 +34,7 @@ Clonez ce dépôt sur votre machine locale via la ligne de commande :
 
 
 
-_ git clone https://github.com/JulienCorbeau/book-scraper\ _
+__git clone https://github.com/JulienCorbeau/book-scraper__
 
 
 
@@ -44,9 +44,9 @@ Naviguez jusqu'au répertoire du projet, créez et activez un environnement virt
 
 
 
-- Sur Windows : \_python -m venv venv\_
+- Sur Windows : __python -m venv venv__
 
-- Sur macOS/Linux : \_python3 -m venv venv\_
+- Sur macOS/Linux : __python3 -m venv venv__
 
 
 
@@ -54,9 +54,9 @@ Puis activez l'environnement virtuel :
 
 
 
-- Sur Windows : \_.\\venv\\Scripts\\activate\_
+- Sur Windows : __.\\venv\\Scripts\\activate__
 
-- Sur macOS/Linux : \_source venv/bin/activate\_
+- Sur macOS/Linux : __source venv/bin/activate__
 
 
 
@@ -68,7 +68,7 @@ Installez toutes les bibliothèques nécessaires à partir du fichier `requireme
 
 
 
-\_pip install -r requirements.txt\_
+__pip install -r requirements.txt__
 
 
 
@@ -78,7 +78,7 @@ Une fois l'installation terminée, vous pouvez exécuter le script :
 
 
 
-\_python main.py\_
+__python main.py__
 
 
 
