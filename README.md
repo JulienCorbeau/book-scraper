@@ -1,8 +1,8 @@
 # book-scraper
 
-&nbsp;
 
-#Projet 1 : Système d'extraction de prix pour Books Online
+
+# Projet 1 : Système d'extraction de prix pour Books Online
 
 
 
