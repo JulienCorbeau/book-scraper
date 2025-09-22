@@ -34,7 +34,7 @@ Clonez ce dépôt sur votre machine locale via la ligne de commande :
 
 
 
-_git clone https://github.com/JulienCorbeau/book-scraper\_
+_ git clone https://github.com/JulienCorbeau/book-scraper\ _
 
 
 
