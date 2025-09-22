@@ -12,10 +12,17 @@ import re
 #FUNCTIONS 
 # ---------------------------------------------
 
-def sanitize_str(str_to_clean):
+def sanitize_str(str_to_clean, max_length=150):
     invalid_chars = ':*?"<>|/\\'
     for char in invalid_chars:
         str_to_clean = str_to_clean.replace(char, '_')
+    
+    # Limiter la longueur du nom de fichier
+    if len(str_to_clean) > max_length:
+        str_to_clean = str_to_clean[:max_length]
+    
+    str_to_clean = str_to_clean.strip()
+    
     return str_to_clean
 
 def get_categories(url_website):
@@ -101,34 +108,93 @@ def get_books_from_category(category_name, url_cat):
         except requests.exceptions.RequestException as e:
             print(f"Erreur de connexion pour la page : {next_page_url}, Erreur : {e}")
             next_page_url = None
-    
+
 def get_data_from_book(category_name, url_book):
     response = requests.get(url_book, timeout=10)
     response.encoding = 'utf-8'
     if response.status_code == 200:
         soup = BeautifulSoup(response.text, 'html.parser')
         book_data = {}
-        book_category = category_name        
         
+        # --- URL de la page produit ---
+        book_data['product_page_url'] = url_book
+
         # --- Title Extraction ---
         title_element = soup.find('h1')
-        book_data['title'] = title_element.text
+        book_data['title'] = title_element.text.strip()
 
-        # --- Price Extraction ---
-        prix_element = soup.find('p', class_='price_color')
-        book_data['price'] = prix_element.text.replace('Â£', '').replace('£', '')
+        # --- Category ---
+        book_data['category'] = category_name
 
-        # --- URL's image Extraction and prepare image's name---
+        # --- Product Information Table Extraction ---
+        product_table = soup.find('table', class_='table table-striped')
+        
+        if product_table:
+            rows = product_table.find_all('tr')
+            
+            for row in rows:
+                th = row.find('th')
+                td = row.find('td')
+                
+                if th and td:
+                    field_name = th.text.strip()
+                    field_value = td.text.strip()
+                    
+                    if field_name == "UPC":
+                        book_data['universal_product_code'] = field_value
+                    elif field_name == "Price (excl. tax)":
+                        book_data['price_excluding_tax'] = field_value.replace('£', '').strip()
+                    elif field_name == "Price (incl. tax)":
+                        book_data['price_including_tax'] = field_value.replace('£', '').strip()
+                    elif field_name == "Availability":
+                        # Extraire le nombre disponible depuis "In stock (X available)"
+                        match = re.search(r'\((\d+) available\)', field_value)
+                        if match:
+                            book_data['number_available'] = match.group(1)
+                        else:
+                            book_data['number_available'] = "0"
+
+        # --- Description Extraction ---
+        description_element = soup.find('div', id='product_description')
+        if description_element:
+            description_p = description_element.find_next_sibling('p')
+            if description_p:
+                book_data['product_description'] = description_p.text.strip()
+            else:
+                book_data['product_description'] = ""
+        else:
+            book_data['product_description'] = ""
+
+        # --- Rating Extraction ---
+        rating_element = soup.find('p', class_=re.compile(r'star-rating'))
+        if rating_element:
+            rating_class = rating_element.get('class')
+            for cls in rating_class:
+                if cls in ['One', 'Two', 'Three', 'Four', 'Five']:
+                    book_data['review_rating'] = cls
+                    break
+            else:
+                book_data['review_rating'] = ""
+        else:
+            book_data['review_rating'] = ""
+
+        # --- Image URL Extraction ---
         img_element = soup.find('img')
-        url_relative = img_element['src'].replace('../../', '')
-        img_url = 'http://books.toscrape.com/' + url_relative
-        file_name = book_data['title'].replace("'", "").replace("&", "and")
-        file_name = sanitize_str(file_name)
-        file_name = re.sub('_+', '_', file_name) + '.jpg'
+        if img_element:
+            url_relative = img_element['src'].replace('../../', '')
+            img_url = 'http://books.toscrape.com/' + url_relative
+            book_data['image_url'] = img_url
+            
+            # Préparer le nom de fichier pour télécharger l'image
+            file_name = book_data['title'].replace("'", "").replace("&", "and")
+            file_name = sanitize_str(file_name)
+            file_name = re.sub('_+', '_', file_name) + '.jpg'
+            
+            download_image(img_url, file_name, category_name)
+        else:
+            book_data['image_url'] = ""
         
-        
-        download_image(img_url, file_name, book_category)
-        save_to_csv(book_data, book_category)  
+        save_to_csv(book_data, category_name)
     
 def download_image(img_url, file_name, book_category):
     # Building path : data/images/[category]/[file]
@@ -154,14 +220,24 @@ def download_image(img_url, file_name, book_category):
     except requests.exceptions.RequestException as e:
         print(f"Erreur de connexion lors du téléchargement: {e}")
 
-    
 def save_to_csv(book_data, category):
     # Building path of the file
     file_name = f"Scraping_{category}.csv"
     file_path = Path("data/csv") / file_name
     
-    # Defining columns to include in CSV
-    field_names = ['title', 'price']
+    # COLONNES EXACTES selon vos spécifications
+    field_names = [
+        'product_page_url',
+        'universal_product_code',
+        'title', 
+        'price_including_tax',
+        'price_excluding_tax',
+        'number_available',
+        'product_description',
+        'category',
+        'review_rating',
+        'image_url'
+    ]
     
     if book_data:
         # Create folder if it doesn't exist
@@ -183,9 +259,7 @@ def save_to_csv(book_data, category):
             
         print(f"Livre ajouté au CSV : {book_data['title']}")
     else:
-        # If book has no category
         print(f"Aucune donnée à sauvegarder pour la catégorie '{category}'.")
-
 
 # -----------------------------------------------
 # MAIN ENTRY POINT
