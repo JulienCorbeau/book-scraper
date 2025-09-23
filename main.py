@@ -12,7 +12,7 @@ import re
 #FUNCTIONS 
 # ---------------------------------------------
 
-def sanitize_str(str_to_clean, max_length=150):
+def sanitize_str(str_to_clean, max_length=100):
     #delete & replace invalid char
     invalid_chars = ':*?"<>|/\\'
     for char in invalid_chars:
